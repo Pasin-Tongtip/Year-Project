@@ -6,7 +6,7 @@
 
 3.Open your terminal and type in “git clone ‘the url that you copied’”
 
-4.Open your ide and run the file “game.py”
+4.Open your ide and run the file “gui.py”
 
 ## Instruction:
 1.This is simply a snake game but with a twist.
