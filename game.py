@@ -2,6 +2,8 @@ from config import Config
 import pygame
 import random
 import operator
+import csv
+import os
 
 
 class Snake:
@@ -131,6 +133,9 @@ class Game:
         self.flash = Flash(50)
         self.game_over = False
         self.generate_equation()
+        self.correct_answers = 0
+        self.incorrect_answers = 0
+        self.movements = {"UP": 0, "DOWN": 0, "LEFT": 0, "RIGHT": 0}
 
     def generate_equation(self):
         ops = {'+': operator.add,
@@ -163,12 +168,16 @@ class Game:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     self.snake.change_direction(-Config.get('BLOCK_SIZE'), 0)
+                    self.movements["LEFT"] += 1
                 elif event.key == pygame.K_RIGHT:
                     self.snake.change_direction(Config.get('BLOCK_SIZE'), 0)
+                    self.movements["RIGHT"] += 1
                 elif event.key == pygame.K_UP:
                     self.snake.change_direction(0, -Config.get('BLOCK_SIZE'))
+                    self.movements["UP"] += 1
                 elif event.key == pygame.K_DOWN:
                     self.snake.change_direction(0, Config.get('BLOCK_SIZE'))
+                    self.movements["DOWN"] += 1
                 elif event.key == pygame.K_r and self.game_over:
                     self.game_reset()
 
@@ -180,6 +189,7 @@ class Game:
                 or head_y >= Config.get('HEIGHT')
                 or self.snake.collide_with_self()):
             self.game_over = True
+            self.log_game_result()
             self.ui.show_message(self.screen, "Game Over! Press R to Restart", Config.get('BLACK'))
             return
 
@@ -189,11 +199,14 @@ class Game:
                 if food.value == self.correct_answer:
                     self.snake.grow_snake()
                     self.score += 1
+                    self.correct_answers += 1
                 else:
                     self.health -= 25
+                    self.incorrect_answers += 1
                     self.flash.start_flash()
                     if self.health <= 0:
                         self.game_over = True
+                        self.log_game_result()
                         self.ui.show_message(self.screen, "Out of health! Press R to Restart", Config.get('BLACK'))
                 self.generate_equation()
                 break
@@ -220,6 +233,32 @@ class Game:
 
                 pygame.display.update()
         pygame.quit()
+
+    def log_game_result(self):
+        total_answers = self.correct_answers + self.incorrect_answers
+        accuracy = round((self.correct_answers / total_answers) * 100, 2) if total_answers else 0
+
+        data = {
+            "Score": self.score,
+            "Elapsed Time (s)": self.time.get_time(),
+            "Accuracy (%)": accuracy,
+            "Correct Answers": self.correct_answers,
+            "Incorrect Answers": self.incorrect_answers,
+            "Health Remaining": self.health,
+            "Moves Up": self.movements["UP"],
+            "Moves Down": self.movements["DOWN"],
+            "Moves Left": self.movements["LEFT"],
+            "Moves Right": self.movements["RIGHT"],
+        }
+
+        filename = "game_results.csv"
+        file_exists = os.path.isfile(filename)
+
+        with open(filename, "a", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=data.keys())
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(data)
 
 
 if __name__ == "__main__":
