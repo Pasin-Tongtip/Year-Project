@@ -8,6 +8,8 @@
 
 4.Open your ide and run the file “gui.py”
 
+5.Click "Play"
+
 ## Instruction:
 1.This is simply a snake game but with a twist.
 
